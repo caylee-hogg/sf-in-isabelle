@@ -1492,6 +1492,21 @@ Proof.
 (** [] *)
 
 
+*)
+
+lemma "f (f (f (b :: bool'))) = f b"
+apply (cases b)
+apply (case_tac "f True'")
+apply simp
+apply (case_tac "f False'")
+apply simp+
+apply (case_tac "f False'")
+apply (case_tac "f True'")
+apply simp+
+done
+
+(* 
+
 (** **** Exercise: 3 stars, optional *)
 Theorem bool_fn_applied_thrice : 
   forall (f : bool -> bool) (b : bool), 
