@@ -1,7 +1,7 @@
 theory Basics
 imports Main begin
 
-(*
+(* COQ
 (** * Basics: Functional Programming *)
  
 (* $Date: 2012-07-21 13:38:33 -0400 (Sat, 21 Jul 2012) $ *)
@@ -32,16 +32,17 @@ Inductive day : Type :=
   | saturday : day
   | sunday : day.
 
-*)
+COQ *)
+
+(* CH - Now we have the Isabelle syntax for a basic datatype *)
 
 datatype day = Monday | Tuesday | Wednesday | Thursday | Friday | Saturday
              | Sunday
 
-(* 
+(* COQ
 
 (** Having defined [day], we can write functions that operate on
     days. *)
-
 Definition next_weekday (d:day) : day :=
   match d with
   | monday => tuesday
@@ -52,9 +53,9 @@ Definition next_weekday (d:day) : day :=
   | saturday => monday
   | sunday => monday
   end.
-*)
+COQ *)
 
-(* Now there's a couple of ways we can define this function. The simplest
+(* CH - Now there's a couple of ways we can define this function. The simplest
    is to define it with primrec, which allows only simple primitive recursion.
 *)
 
@@ -67,12 +68,12 @@ primrec nextWeekday :: "day \<Rightarrow> day" where
 "nextWeekday Saturday = Monday" |
 "nextWeekday Sunday = Monday"
 
-(* now let's look at what isabelle has now defined for us using
+(* CH - now let's look at what isabelle has now defined for us using
    the print_theorems command *) 
 
 print_theorems
 
-(* as we can we have a theorem that is called nextWeekday.simps
+(* CH - as we can we have a theorem that is called nextWeekday.simps
    that gives us all the equations we have defined from primitive 
    recursion.
 
@@ -86,15 +87,15 @@ fun nextWeekday' :: "day \<Rightarrow> day" where
 "nextWeekday' Thursday = Friday" |
 "nextWeekday' _ = Monday"
 
-(* So here you can see that we use a wildcard to represent the identical cases for Friday, Saturday, and Sunday. Now let's look at what equations were generated. *)
+(* CH - So here you can see that we use a wildcard to represent the identical cases for Friday, Saturday, and Sunday. Now let's look at what equations were generated. *)
 
 thm nextWeekday'.simps
 
-(* Well two things here: first, that you can look at theorems with the 'thm'
+(* CH - Well two things here: first, that you can look at theorems with the 'thm'
    command. Second, that we have the same set of equations as before despite
    using the wildcard. *)
 
-(* 
+(* COQ
 (** One thing to note is that the argument and return types of
     this function are explicitly declared.  Like most functional
     programming languages, Coq can often work out these types even if
@@ -106,15 +107,19 @@ thm nextWeekday'.simps
     some examples.  There are actually three different ways to do this
     in Coq.  First, we can use the command [Eval simpl] to evaluate a
     compound expression involving [next_weekday].  *)
-*)
+
+COQ *)
 
 value "nextWeekday Tuesday"
 
-(* value is similar to Eval but I believe there is less control over
-   the evaluation strategry *)
+(* CH - value is similar to Eval but I believe there is less control over
+   the evaluation strategry
+
+TODO: double check this - what options does value have to it?
+ *)
 
 
-(* 
+(* COQ
 Eval simpl in (next_weekday friday).
    (* ==> monday : day *)
 Eval simpl in (next_weekday (next_weekday saturday)).
@@ -147,16 +152,16 @@ Example test_next_weekday:
 
 Proof. simpl. reflexivity.  Qed.
 
-*)
+COQ *)
 
 lemma "nextWeekday (nextWeekday Saturday) = Tuesday"
 apply simp
 done
 
-(* simplification in isabelle is far more powerful than it is in Coq, 
-   which will be a theme we see in the future *)
+(* CH simplification in isabelle is far more powerful than it is in Coq, 
+   which will be a theme we see in the future. *)
 
-(* 
+(* COQ
 
 (** The details are not important for now (we'll come back to
     them in a bit), but essentially this can be read as "The assertion
@@ -178,14 +183,15 @@ done
 
 (** In a similar way, we can define the type [bool] of booleans,
     with members [true] and [false]. *)
-*)
+
+COQ *)
 
 (* in this file we'll use our own version of the boolean datatype but
   in future files we'll just use the built in datatype to be idiomatic *)
 
 datatype bool' = True' | False' 
 
-(* 
+(* COQ
 Inductive bool : Type :=
   | true : bool
   | false : bool.
@@ -201,19 +207,20 @@ Inductive bool : Type :=
 
 (** Functions over booleans can be defined in the same way as
     above: *)
-*)
+
+COQ *)
 
 primrec negb :: "bool' \<Rightarrow> bool'" where
 "negb True' = False'" |
 "negb False' = True'"
 
-(* 
+(* COQ
 Definition negb (b:bool) : bool := 
   match b with
   | true => false
   | false => true
   end.
-*)
+COQ *)
 
 primrec andb :: "bool' \<Rightarrow> bool' \<Rightarrow> bool'" where 
 "andb True' b2 = b2" |
@@ -225,7 +232,7 @@ primrec orb :: "bool' \<Rightarrow> bool' \<Rightarrow> bool'" where
 
 value "orb True' False'"
 
-(* 
+(* COQ
 Definition andb (b1:bool) (b2:bool) : bool := 
   match b1 with 
   | true => b2 
@@ -290,7 +297,20 @@ Example test_nandb3:               (nandb false true) = true.
 Example test_nandb4:               (nandb true true) = false.
 (* FILL IN HERE *) Admitted.
 (** [] *)
+COQ *)
 
+definition nandb :: "bool' \<Rightarrow> bool' \<Rightarrow> bool'" where
+"nandb b1 b2 \<equiv> orb (negb b1) (negb b2)"
+
+lemma "nandb True' False' = True'" 
+      "nandb False' False' = True'"
+      "nandb False' True' = True'"
+      "nandb True' True' = False'"
+by (simp_all add: nandb_def)
+(* CH - haven't explained the difference between definition 
+        and primrec yet, have I? TODO *)
+
+(* COQ 
 (** **** Exercise: 1 star (andb3) *)
 Definition andb3 (b1:bool) (b2:bool) (b3:bool) : bool :=
   (* FILL IN HERE *) admit.
@@ -322,11 +342,11 @@ Check (negb true).
 
 Check negb.
 (* ===> negb : bool -> bool *)
-*)
+
+COQ *)
 
 term negb
-
-(* 
+(* COQ 
 (** The type of [negb], written [bool -> bool] and pronounced
     "[bool] arrow [bool]," can be read, "Given an input of type
     [bool], this function produces an output of type [bool]."
@@ -390,13 +410,13 @@ Inductive nat : Type :=
 
     We can write simple functions that pattern match on natural
     numbers just as we did above -- for example, predecessor: *)
-*)
+COQ *)
 
 primrec pred :: "nat \<Rightarrow> nat" where
 "pred 0 = 0" |
 "pred (Suc n) = n"
 
-(* 
+(* COQ 
 Definition pred (n : nat) : nat :=
   match n with
     | O => O
@@ -447,7 +467,7 @@ Check minustwo.
     keyword [Fixpoint]. *)
 *)
 
-(* so for the record we can't use primrec for a definition like this, but 
+(* CH - so for the record we can't use primrec for a definition like this, but 
    fun works just fine *)
 
 fun evenb :: "nat \<Rightarrow> bool'" where
@@ -455,7 +475,7 @@ fun evenb :: "nat \<Rightarrow> bool'" where
 "evenb (Suc 0) = False'" |
 "evenb (Suc (Suc n)) = evenb n"
 
-(* 
+(* COQ 
 Fixpoint evenb (n:nat) : bool :=
   match n with
   | O        => true
@@ -475,9 +495,9 @@ Fixpoint evenb (n:nat) : bool :=
     is a simpler definition that will be a bit easier to work with: *)
 
 Definition oddb (n:nat) : bool   :=   negb (evenb n).
-*)
+COQ *)
 
-(* now we use the definition facility instead of the primrec or fun facilities to
+(* CH - now we use the definition facility instead of the primrec or fun facilities to
    define this operation *)
 
 definition oddb :: "nat \<Rightarrow> bool'" where
@@ -494,7 +514,7 @@ lemma "oddb (Suc 0) = True'"
 apply (simp add: oddb_def)
 done
 
-(* or to permanently have it unfolded *)
+(* CH - or to permanently have it unfolded *)
 
 declare oddb_def [simp]
 
@@ -502,7 +522,7 @@ lemma "oddb (Suc 0) = True'"
 apply simp
 done
 
-(* 
+(* COQ 
 Example test_oddb1:    (oddb (S O)) = true.
 Proof. simpl. reflexivity.  Qed.
 Example test_oddb2:    (oddb (S (S (S (S O))))) = false.
@@ -1001,9 +1021,11 @@ Proof.
     reflexivity.
   Case "b = false".
     rewrite <- H. reflexivity.  Qed.
-*)
+COQ *)
 
-(* So here's how we deal with cases in Isabelle, using the Isar syntax for proofs *)
+(* TODO: need to parse out what of the above material needs to be included? *)
+
+(* CH - So here's how we deal with cases in Isabelle, using the Isar syntax for proofs *)
 
 lemma "andb b c = True' \<Longrightarrow> b = True'"
 proof (cases b)
@@ -1015,7 +1037,7 @@ proof (cases b)
    thus ?thesis using False' by simp
 qed
 
-(* 
+(* COQ 
 (** [Case] does something very trivial: It simply adds a string
     that we choose (tagged with the identifier "Case") to the context
     for the current goal.  When subgoals are generated, this string is
@@ -1492,7 +1514,7 @@ Proof.
 (** [] *)
 
 
-*)
+COQ *)
 
 lemma "f (f (f (b :: bool'))) = f b"
 apply (cases b)
@@ -1625,6 +1647,8 @@ Qed.
 
 (* FILL IN HERE *)
 (** [] *)
-*)
+COQ *)
+
+(* TODO: write section on induction, crib from my previous versions *)
 
 end

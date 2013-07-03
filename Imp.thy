@@ -57,7 +57,21 @@ Module AExp.
 
 (** These two definitions specify the _abstract syntax_ of
     arithmetic and boolean expressions. *)
+COQ *)
 
+datatype aexp = ANum nat 
+              | APlus aexp aexp
+              | AMinus aexp aexp
+              | AMult aexp aexp 
+
+datatype bexp = BTrue 
+              | BFalse
+              | BEq aexp aexp
+              | BLe aexp aexp
+              | BNot bexp
+              | BAnd bexp bexp
+
+(* COQ
 Inductive aexp : Type := 
   | ANum : nat -> aexp
   | APlus : aexp -> aexp -> aexp
@@ -141,7 +155,16 @@ Fixpoint aeval (e : aexp) : nat :=
   | AMinus a1 a2  => (aeval a1) - (aeval a2)
   | AMult a1 a2 => (aeval a1) * (aeval a2)
   end.
+*)
 
+fun aeval :: "aexp \<Rightarrow> nat" where
+"aeval (ANum n) = n" |
+"aeval (APlus a1 a2) = (aeval a1) + (aeval a2)" |
+"aeval (AMinus a1 a2) = (aeval a1) - (aeval a2)" |
+"aeval (AMult a1 a2) = (aeval a1) * (aeval a2)"
+
+
+(* COQ  
 Example test_aeval1: 
   aeval (APlus (ANum 2) (ANum 2)) = 4.
 Proof. reflexivity. Qed.
@@ -157,7 +180,17 @@ Fixpoint beval (e : bexp) : bool :=
   | BNot b1     => negb (beval b1)
   | BAnd b1 b2  => andb (beval b1) (beval b2)
   end.
+COQ *)
 
+fun beval :: "bexp \<Rightarrow> bool" where
+"beval BTrue = True" |
+"beval BFalse = False" |
+"beval (BEq a1 a2) = (aeval a1 = aeval a2)" |
+"beval (BLe a1 a2) = (aeval a1 \<le> aeval a2)" |
+"beval (BNot b1) = (\<not> beval b1)" |
+"beval (BAnd b1 b2) = (beval b1 \<and> beval b2)"
+
+(*
 (* ####################################################### *)
 (** ** Optimization *)
 
@@ -180,7 +213,16 @@ Fixpoint optimize_0plus (e:aexp) : aexp :=
   | AMult e1 e2 => 
       AMult (optimize_0plus e1) (optimize_0plus e2)
   end.
+COQ *)
 
+fun optimize0Plus :: "aexp \<Rightarrow> aexp" where
+"optimize0Plus (ANum n) = (ANum n)" |
+"optimize0Plus (APlus (ANum 0) e2) = optimize0Plus e2" |
+"optimize0Plus (APlus e1 e2) = APlus (optimize0Plus e1) (optimize0Plus e2)" |
+"optimize0Plus (AMinus e1 e2) = AMinus (optimize0Plus e1) (optimize0Plus e2)" |
+"optimize0Plus (AMult e1 e2) = AMult (optimize0Plus e1) (optimize0Plus e2)"
+
+(*
 (** To make sure our optimization is doing the right thing we
     can test it on some examples and see if the output looks OK. *)
 
@@ -190,11 +232,28 @@ Example test_optimize_0plus:
                                (APlus (ANum 0) (ANum 1)))) 
   = APlus (ANum 2) (ANum 1).
 Proof. reflexivity. Qed.
+*)
 
+value "optimize0Plus (APlus (ANum 2) (APlus (ANum 0) (APlus (ANum 0) (ANum 1))))"
+
+(*
 (** But if we want to be sure the optimization is correct --
     i.e., that evaluating an optimized expression gives the same
     result as the original -- we should prove it. *)
+*)
 
+theorem optimize0PlusSound : "aeval (optimize0Plus e) = aeval e"
+apply (induct e)
+apply simp
+defer
+apply simp
+apply simp
+apply (case_tac e1)
+apply (case_tac nat)
+apply simp_all
+done
+
+(*
 Theorem optimize_0plus_sound: forall e,
   aeval (optimize_0plus e) = aeval e.
 Proof.
